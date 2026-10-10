@@ -12,3 +12,11 @@ class PostLoginResponseBody(BaseModel):
 
 
 PostLoginResponse = Response[PostLoginResponseBody]
+
+
+class PostRegisterRequestBody(BaseModel):
+    username: str
+    password: str
+
+
+PostRegisterResponse = Response[str]

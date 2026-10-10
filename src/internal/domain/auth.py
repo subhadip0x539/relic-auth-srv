@@ -11,12 +11,10 @@ class Role(str, Enum):
 
 
 class User(BaseModel):
-    id: str
     username: str
     password_hash: str
     roles: list[Role] = [Role.VIEWER]
     is_active: bool
-    token_version: int
     created_at: datetime
     updated_at: datetime
 

@@ -5,7 +5,7 @@ from pydantic_settings import BaseSettings
 from typing import TypedDict
 
 DEFAULT_MONGO_URI = "mongodb://user:P@ssw0Rd!@localhost:22017"
-DEFAULT_MONGO_DATABASE_NAME = "relic_core"
+DEFAULT_MONGO_DATABASE_NAME = "relic_auth"
 
 DEFAULT_SERVER_HOST = "localhost"
 DEFAULT_SERVER_PORT = 8081
@@ -56,7 +56,7 @@ class ConfigBuilder:
             {
                 "uri": os.getenv("MONGO_URI", DEFAULT_MONGO_URI),
                 "database_name": os.getenv(
-                    "MONGO_DATABASE", DEFAULT_MONGO_DATABASE_NAME
+                    "MONGO_DATABASE_NAME", DEFAULT_MONGO_DATABASE_NAME
                 ),
             }
         )

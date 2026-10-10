@@ -1,8 +1,7 @@
 from internal.port.auth import AuthService
 from internal.dto.auth import (
-    PostLoginResponse,
-    PostLoginRequestBody,
-    PostLoginResponseBody,
+    PostRegisterRequestBody,
+    PostRegisterResponse,
 )
 from fastapi import HTTPException, status
 
@@ -13,16 +12,13 @@ class AuthHandler:
     def __init__(self, svc: AuthService):
         self.svc = svc
 
-    def login(self, body: PostLoginRequestBody) -> PostLoginResponse:
-        user = self.svc.authenticate(body.username, body.password)
+    def register(self, body: PostRegisterRequestBody) -> PostRegisterResponse:
+        user = self.svc.register(body.username, body.password)
 
         if not user:
             raise HTTPException(
-                status.HTTP_401_UNAUTHORIZED,
-                "Invalid credentials",
-                headers={"WWW-Authenticate": "Bearer"},
+                status.HTTP_400_BAD_REQUEST,
+                "User registration failed",
             )
 
-        tokens = self.svc.issue_tokens(user, meta)
-
-        return PostLoginResponse(body=PostLoginResponseBody(access_token=""))
+        return PostRegisterResponse(body=f"User registered successfully")
