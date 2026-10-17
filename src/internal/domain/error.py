@@ -18,3 +18,8 @@ class InvalidCredentialsError(Error):
 class AccountLockedError(Error):
     code = status.HTTP_401_UNAUTHORIZED
     message = "Account temporarily locked. Try again later"
+
+
+class InvalidTokenError(Error):
+    code = status.HTTP_401_UNAUTHORIZED
+    message = "Invalid token"

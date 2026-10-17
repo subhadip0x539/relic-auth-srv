@@ -1,7 +1,7 @@
 from internal.port.auth import AuthRepository
 from pymongo.database import Database
 from typing import Any
-from internal.domain.auth import User, Role, Claims
+from internal.domain.auth import User, Role, Claims, RefreshToken
 from argon2 import PasswordHasher
 from datetime import datetime, timezone, timedelta
 from uuid import uuid4
@@ -132,15 +132,22 @@ class AuthRepositoryImpl(AuthRepository):
 
         return token
 
-    def new_refresh_token(self) -> tuple[str, str, int]:
-        raw = secrets.token_urlsafe(48)
+    def hash_refresh_token(self, refresh_token: str) -> str:
+        return hashlib.sha256(refresh_token.encode()).hexdigest()
 
-        return raw, hashlib.sha256(raw.encode()).hexdigest(), self._refresh_ttl_seconds
+    def new_refresh_token(self) -> tuple[str, str, int]:
+        refresh_token = secrets.token_urlsafe(48)
+
+        return (
+            refresh_token,
+            self.hash_refresh_token(refresh_token),
+            self._refresh_ttl_seconds,
+        )
 
     def create_refresh_token(
         self,
         username: str,
-        refresh_hash: str,
+        token_hash: str,
         family_id: str,
         user_agent: str | None,
         ip: str | None,
@@ -149,16 +156,40 @@ class AuthRepositoryImpl(AuthRepository):
 
         collection = self._db.get_collection("refresh_tokens")
 
-        collection.insert_one(
-            {
-                "user_id": username,
-                "token_hash": refresh_hash,
-                "family_id": family_id,
-                "issued_at": now,
-                "expires_at": now + timedelta(seconds=self._refresh_ttl_seconds),
-                "revoked_at": None,
-                "replaced_by": None,
-                "user_agent": user_agent,
-                "ip": ip,
-            }
+        refresh_token = RefreshToken(
+            username=username,
+            token_hash=token_hash,
+            family_id=family_id,
+            issued_at=now,
+            expires_at=now + timedelta(seconds=self._refresh_ttl_seconds),
+            revoked_at=None,
+            user_agent=user_agent,
+            ip=ip,
+        )
+
+        collection.insert_one(refresh_token.model_dump())
+
+    def get_refresh_token_by_hash(self, token_hash: str) -> RefreshToken | None:
+        doc = self._refresh_tokens_collection.find_one({"token_hash": token_hash})
+
+        if not doc:
+            return None
+
+        refresh_token = RefreshToken(
+            username=doc["username"],
+            token_hash=doc["token_hash"],
+            family_id=doc["family_id"],
+            issued_at=doc["issued_at"],
+            expires_at=doc["expires_at"],
+            revoked_at=doc["revoked_at"],
+            user_agent=doc["user_agent"],
+            ip=doc["ip"],
+        )
+
+        return refresh_token
+
+    def revoke_family(self, family_id: str) -> None:
+        self._refresh_tokens_collection.update_many(
+            {"family_id": family_id, "revoked_at": None},
+            {"$set": {"revoked_at": datetime.now(timezone.utc)}},
         )

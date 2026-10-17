@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from internal.domain.auth import User, TokenPair
+from internal.domain.auth import User, TokenPair, RefreshToken
 
 
 class AuthRepository(ABC):
@@ -31,7 +31,7 @@ class AuthRepository(ABC):
     def create_refresh_token(
         self,
         username: str,
-        refresh_hash: str,
+        token_hash: str,
         family_id: str,
         user_agent: str | None,
         ip: str | None,
@@ -54,6 +54,18 @@ class AuthRepository(ABC):
     def rehash_password(self, username: str, password_hash: str) -> None:
         pass
 
+    @abstractmethod
+    def get_refresh_token_by_hash(self, token_hash: str) -> RefreshToken | None:
+        pass
+
+    @abstractmethod
+    def hash_refresh_token(self, refresh_token: str) -> str:
+        pass
+
+    @abstractmethod
+    def revoke_family(self, family_id: str) -> None:
+        pass
+
 
 class AuthService(ABC):
     @abstractmethod
@@ -63,5 +75,11 @@ class AuthService(ABC):
     @abstractmethod
     def login(
         self, username: str, password: str, user_agent: str | None, ip: str | None
+    ) -> TokenPair:
+        pass
+
+    @abstractmethod
+    def refresh(
+        self, refresh_token: str | None, user_agent: str | None, ip: str | None
     ) -> TokenPair:
         pass

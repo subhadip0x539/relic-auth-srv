@@ -1,7 +1,11 @@
 from internal.port.auth import AuthService, AuthRepository
 from internal.domain.auth import User, TokenPair
 from fastapi import HTTPException, status
-from internal.domain.error import InvalidCredentialsError, AccountLockedError
+from internal.domain.error import (
+    InvalidCredentialsError,
+    AccountLockedError,
+    InvalidTokenError,
+)
 from uuid import uuid4
 from datetime import datetime, timezone
 
@@ -63,4 +67,50 @@ class AuthServiceImpl(AuthService):
             access_token=access_token,
             refresh_token=refresh_token,
             refresh_ttl_seconds=refresh_ttl_seconds,
+        )
+
+    def refresh(
+        self, refresh_token: str | None, user_agent: str | None, ip: str | None
+    ) -> TokenPair:
+        if not refresh_token:
+            raise InvalidTokenError()
+
+        now = datetime.now(timezone.utc)
+
+        token = self.repo.get_refresh_token_by_hash(
+            self.repo.hash_refresh_token(refresh_token)
+        )
+
+        if not token:
+            raise InvalidTokenError()
+
+        if token.revoked_at:
+            self.repo.revoke_family(token.family_id)
+            raise InvalidTokenError()
+
+        if token.expires_at <= now:
+            raise InvalidTokenError()
+
+        user = self.repo.get_user(str(token.username))
+        if not user or not user.is_active:
+            self.repo.revoke_family(token.family_id)
+            raise InvalidTokenError()
+
+        new_refresh_token, new_refresh_token_hash, _refresh_ttl_seconds = (
+            self.repo.new_refresh_token()
+        )
+        self.repo.create_refresh_token(
+            token.username,
+            new_refresh_token_hash,
+            token.family_id,
+            user_agent,
+            ip,
+        )
+
+        access_token = self.repo.new_access_token(user)
+
+        return TokenPair(
+            access_token=access_token,
+            refresh_token=new_refresh_token,
+            refresh_ttl_seconds=_refresh_ttl_seconds,
         )

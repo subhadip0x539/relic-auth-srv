@@ -5,9 +5,15 @@ from internal.dto.auth import (
     PostLoginRequestBody,
     PostLoginResponseBody,
     PostLoginResponse,
+    PostRefreshResponseBody,
+    PostRefreshResponse,
 )
 from fastapi import HTTPException, status, Request, Response
-from internal.domain.error import InvalidCredentialsError, AccountLockedError
+from internal.domain.error import (
+    InvalidCredentialsError,
+    AccountLockedError,
+    InvalidTokenError,
+)
 
 
 class AuthHandler:
@@ -56,7 +62,31 @@ class AuthHandler:
         )
 
         return PostLoginResponse(
-            body=PostLoginResponseBody(
-                access_token=result.access_token, refresh_token=result.refresh_token
+            body=PostLoginResponseBody(access_token=result.access_token)
+        )
+
+    def refresh(
+        self, refresh_token: str | None, request: Request, response: Response
+    ) -> PostRefreshResponse:
+        try:
+            result = self.svc.refresh(
+                refresh_token,
+                user_agent=request.headers.get("user-agent"),
+                ip=request.client.host if request.client else None,
             )
+        except InvalidTokenError as exc:
+            raise HTTPException(exc.code, exc.message)
+
+        response.set_cookie(
+            key="refresh_token",
+            value=result.refresh_token,
+            max_age=result.refresh_ttl_seconds,
+            httponly=True,
+            secure=False,
+            samesite="lax",
+            path="/auth",
+        )
+
+        return PostRefreshResponse(
+            body=PostRefreshResponseBody(access_token=result.access_token)
         )

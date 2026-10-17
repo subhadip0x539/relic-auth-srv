@@ -29,6 +29,17 @@ class Claims(BaseModel):
     exp: datetime
 
 
+class RefreshToken(BaseModel):
+    username: str
+    token_hash: str
+    family_id: str
+    issued_at: datetime
+    expires_at: datetime
+    revoked_at: datetime | None = None
+    user_agent: str | None
+    ip: str | None
+
+
 class TokenPair(BaseModel):
     access_token: str
     refresh_token: str
