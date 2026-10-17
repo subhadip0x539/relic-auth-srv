@@ -25,7 +25,7 @@ class MongoClient:
         if not self._database_name:
             raise ValueError("Database name is required")
 
-        self._client = PyMongoClient(self._uri)
+        self._client = PyMongoClient(self._uri, tz_aware=True)
 
         self._db = self._client[self._database_name]
 

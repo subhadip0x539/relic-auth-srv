@@ -9,6 +9,7 @@ class PostLoginRequestBody(BaseModel):
 
 class PostLoginResponseBody(BaseModel):
     access_token: str
+    refresh_token: str
 
 
 PostLoginResponse = Response[PostLoginResponseBody]

@@ -15,10 +15,21 @@ class User(BaseModel):
     password_hash: str
     roles: list[Role] = [Role.VIEWER]
     is_active: bool
+    failed_login_count: int = 0
+    locked_until: datetime | None = None
     created_at: datetime
     updated_at: datetime
 
 
-class Tokens(BaseModel):
+class Claims(BaseModel):
+    sub: str
+    roles: list[Role]
+    jti: str
+    iat: datetime
+    exp: datetime
+
+
+class TokenPair(BaseModel):
     access_token: str
     refresh_token: str
+    refresh_ttl_seconds: int

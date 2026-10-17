@@ -1,4 +1,10 @@
-from .common import MongoClient, get_mongo_client, PasswordHasher, get_password_hasher
+from .common import (
+    config,
+    MongoClient,
+    get_mongo_client,
+    PasswordHasher,
+    get_password_hasher,
+)
 from fastapi import Depends
 from internal.repositories.auth import AuthRepository, AuthRepositoryImpl
 from internal.services.auth import AuthService, AuthServiceImpl
@@ -9,7 +15,16 @@ def get_auth_repository(
     mongo_client: MongoClient = Depends(get_mongo_client),
     password_hasher: PasswordHasher = Depends(get_password_hasher),
 ) -> AuthRepository:
-    return AuthRepositoryImpl(mongo_client.db, password_hasher)
+    return AuthRepositoryImpl(
+        mongo_client.db,
+        password_hasher,
+        config.auth.secret,
+        config.auth.algorithm,
+        config.auth.access_ttl_seconds,
+        config.auth.refresh_ttl_seconds,
+        config.auth.lockout_duration_seconds,
+        config.auth.max_login_attempts,
+    )
 
 
 def get_auth_service(
