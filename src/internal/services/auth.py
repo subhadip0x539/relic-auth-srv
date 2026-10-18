@@ -114,3 +114,14 @@ class AuthServiceImpl(AuthService):
             refresh_token=new_refresh_token,
             refresh_ttl_seconds=_refresh_ttl_seconds,
         )
+
+    def logout(self, refresh_token: str | None) -> None:
+        if not refresh_token:
+            raise InvalidTokenError()
+
+        token = self.repo.get_refresh_token_by_hash(
+            self.repo.hash_refresh_token(refresh_token)
+        )
+
+        if token:
+            self.repo.revoke_family(token.family_id)

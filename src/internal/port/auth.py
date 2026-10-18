@@ -83,3 +83,7 @@ class AuthService(ABC):
         self, refresh_token: str | None, user_agent: str | None, ip: str | None
     ) -> TokenPair:
         pass
+
+    @abstractmethod
+    def logout(self, refresh_token: str | None) -> None:
+        pass

@@ -90,3 +90,17 @@ class AuthHandler:
         return PostRefreshResponse(
             body=PostRefreshResponseBody(access_token=result.access_token)
         )
+
+    def logout(self, refresh_token: str | None, response: Response) -> None:
+        try:
+            self.svc.logout(refresh_token)
+        except InvalidTokenError as exc:
+            raise HTTPException(exc.code, exc.message)
+
+        response.delete_cookie(
+            key="refresh_token",
+            path="/auth",
+            httponly=True,
+            secure=False,
+            samesite="lax",
+        )

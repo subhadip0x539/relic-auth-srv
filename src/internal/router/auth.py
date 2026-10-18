@@ -49,3 +49,12 @@ def refresh(
     hdl: AuthHandler = Depends(get_auth_handler),
 ):
     return hdl.refresh(refresh_token, request, response)
+
+
+@router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
+def logout(
+    response: Response,
+    refresh_token: str | None = Cookie(default=None),
+    hdl: AuthHandler = Depends(get_auth_handler),
+):
+    hdl.logout(refresh_token, response)
