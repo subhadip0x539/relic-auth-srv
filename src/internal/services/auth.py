@@ -15,7 +15,9 @@ class AuthServiceImpl(AuthService):
         self.repo = repo
         self._dummy_password_hash = repo.hash_password(str(uuid4()))
 
-    def register(self, username: str, password: str) -> User | None:
+    def register(
+        self, username: str, password: str, fname: str, lname: str
+    ) -> User | None:
         if self.repo.get_user(username):
             raise HTTPException(
                 status.HTTP_400_BAD_REQUEST,
@@ -24,7 +26,7 @@ class AuthServiceImpl(AuthService):
 
         password_hash = self.repo.hash_password(password)
 
-        user = self.repo.create_user(username, password_hash)
+        user = self.repo.create_user(username, password_hash, fname, lname)
 
         return user
 
@@ -125,3 +127,6 @@ class AuthServiceImpl(AuthService):
 
         if token:
             self.repo.revoke_family(token.family_id)
+
+    def me(self, username: str) -> User | None:
+        return self.repo.get_user(username)

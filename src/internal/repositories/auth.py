@@ -1,7 +1,7 @@
 from internal.port.auth import AuthRepository
 from pymongo.database import Database
 from typing import Any
-from internal.domain.auth import User, Role, Claims, RefreshToken
+from internal.domain.auth import User, TokenClaims, RefreshToken
 from argon2 import PasswordHasher
 from datetime import datetime, timezone, timedelta
 from uuid import uuid4
@@ -40,8 +40,11 @@ class AuthRepositoryImpl(AuthRepository):
 
         return User(
             username=doc["username"],
+            fname=doc["fname"],
+            lname=doc["lname"],
             password_hash=doc["password_hash"],
-            roles=doc["roles"],
+            role=doc["role"],
+            permissions=doc["permissions"],
             is_active=doc["is_active"],
             locked_until=doc["locked_until"],
             created_at=doc["created_at"],
@@ -58,12 +61,15 @@ class AuthRepositoryImpl(AuthRepository):
         except Exception:
             return False
 
-    def create_user(self, username: str, password_hash: str) -> User:
+    def create_user(
+        self, username: str, password_hash: str, fname: str, lname: str
+    ) -> User:
 
         user = User(
             username=username,
+            fname=fname,
+            lname=lname,
             password_hash=password_hash,
-            roles=[Role.VIEWER],
             is_active=True,
             created_at=datetime.now(timezone.utc),
             updated_at=datetime.now(timezone.utc),
@@ -120,9 +126,10 @@ class AuthRepositoryImpl(AuthRepository):
     def new_access_token(self, user: User) -> str:
         now = datetime.now(timezone.utc)
 
-        claims = Claims(
+        claims = TokenClaims(
             sub=user.username,
-            roles=user.roles,
+            role=user.role,
+            permissions=user.permissions,
             jti=str(uuid4()),
             iat=now,
             exp=now + timedelta(seconds=self._access_ttl_seconds),

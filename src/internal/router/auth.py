@@ -5,8 +5,10 @@ from internal.dto.auth import (
     PostLoginRequestBody,
     PostLoginResponse,
     PostRefreshResponse,
+    GetMeResponse,
 )
 from internal.deps.auth import get_auth_handler, AuthHandler
+from internal.deps.common import Claims, get_claims
 
 router = APIRouter(prefix="/auth")
 
@@ -48,6 +50,7 @@ def refresh(
     refresh_token: str | None = Cookie(default=None),
     hdl: AuthHandler = Depends(get_auth_handler),
 ):
+    print(refresh_token)
     return hdl.refresh(refresh_token, request, response)
 
 
@@ -58,3 +61,15 @@ def logout(
     hdl: AuthHandler = Depends(get_auth_handler),
 ):
     hdl.logout(refresh_token, response)
+
+
+@router.get(
+    "/me",
+    response_model=GetMeResponse,
+    response_model_exclude_none=True,
+)
+def me(
+    claims: Claims = Depends(get_claims),
+    hdl: AuthHandler = Depends(get_auth_handler),
+):
+    return hdl.me(claims)

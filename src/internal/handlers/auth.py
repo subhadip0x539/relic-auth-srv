@@ -7,6 +7,8 @@ from internal.dto.auth import (
     PostLoginResponse,
     PostRefreshResponseBody,
     PostRefreshResponse,
+    GetMeResponseBody,
+    GetMeResponse,
 )
 from fastapi import HTTPException, status, Request, Response
 from internal.domain.error import (
@@ -14,6 +16,7 @@ from internal.domain.error import (
     AccountLockedError,
     InvalidTokenError,
 )
+from internal.lib.claims import Claims
 
 
 class AuthHandler:
@@ -23,7 +26,7 @@ class AuthHandler:
         self.svc = svc
 
     def register(self, body: PostRegisterRequestBody) -> PostRegisterResponse:
-        result = self.svc.register(body.username, body.password)
+        result = self.svc.register(body.username, body.password, body.fname, body.lname)
 
         if not result:
             raise HTTPException(
@@ -58,7 +61,7 @@ class AuthHandler:
             httponly=True,
             secure=False,
             samesite="lax",
-            path="/auth",
+            path="/v1/auth",
         )
 
         return PostLoginResponse(
@@ -84,11 +87,27 @@ class AuthHandler:
             httponly=True,
             secure=False,
             samesite="lax",
-            path="/auth",
+            path="/v1/auth",
         )
 
         return PostRefreshResponse(
             body=PostRefreshResponseBody(access_token=result.access_token)
+        )
+
+    def me(self, claims: Claims) -> GetMeResponse:
+
+        result = self.svc.me(claims.sub)
+
+        if not result:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="User not found",
+            )
+
+        return GetMeResponse(
+            body=GetMeResponseBody(
+                username=result.username, fname=result.fname, lname=result.lname
+            )
         )
 
     def logout(self, refresh_token: str | None, response: Response) -> None:
@@ -99,7 +118,7 @@ class AuthHandler:
 
         response.delete_cookie(
             key="refresh_token",
-            path="/auth",
+            path="/v1/auth",
             httponly=True,
             secure=False,
             samesite="lax",

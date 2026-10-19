@@ -16,7 +16,9 @@ class AuthRepository(ABC):
         pass
 
     @abstractmethod
-    def create_user(self, username: str, password_hash: str) -> User:
+    def create_user(
+        self, username: str, password_hash: str, fname: str, lname: str
+    ) -> User:
         pass
 
     @abstractmethod
@@ -69,7 +71,9 @@ class AuthRepository(ABC):
 
 class AuthService(ABC):
     @abstractmethod
-    def register(self, username: str, password: str) -> User | None:
+    def register(
+        self, username: str, password: str, fname: str, lname: str
+    ) -> User | None:
         pass
 
     @abstractmethod
@@ -86,4 +90,8 @@ class AuthService(ABC):
 
     @abstractmethod
     def logout(self, refresh_token: str | None) -> None:
+        pass
+
+    @abstractmethod
+    def me(slef, username: str) -> User | None:
         pass

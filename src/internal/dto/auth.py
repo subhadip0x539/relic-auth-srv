@@ -15,6 +15,8 @@ PostLoginResponse = Response[PostLoginResponseBody]
 
 
 class PostRegisterRequestBody(BaseModel):
+    fname: str
+    lname: str
     username: str
     password: str
 
@@ -27,3 +29,12 @@ class PostRefreshResponseBody(BaseModel):
 
 
 PostRefreshResponse = Response[PostRefreshResponseBody]
+
+
+class GetMeResponseBody(BaseModel):
+    username: str
+    fname: str
+    lname: str
+
+
+GetMeResponse = Response[GetMeResponseBody]

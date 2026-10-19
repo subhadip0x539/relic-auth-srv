@@ -23,3 +23,8 @@ class AccountLockedError(Error):
 class InvalidTokenError(Error):
     code = status.HTTP_401_UNAUTHORIZED
     message = "Invalid token"
+
+
+class ForbiddenError(Error):
+    code = status.HTTP_403_FORBIDDEN
+    message = "You do not have permission to perform this action"
